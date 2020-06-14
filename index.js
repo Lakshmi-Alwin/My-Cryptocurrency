@@ -33,6 +33,7 @@ app.post('/api/mine', (req, res) => {
 
 app.post('/api/transact', (req, res) => {
     const {recipient, amount} = req.body;
+
     let transaction = transactionPool.
     existingTransaction({inputAddress: wallet.publicKey});
 
@@ -40,6 +41,9 @@ app.post('/api/transact', (req, res) => {
         if(transaction) {
             transaction.update({senderWallet: wallet, recipient, amount});
         } else {
+            if((amount +2) > Wallet.calculateBalance({chain: blockchain.chain, address: wallet.publicKey})) {
+                throw new Error('Amount exceeds balance');
+            }
             transaction = wallet.createTransaction({recipient, amount, chain: blockchain.chain});
         }
     } catch(error) {

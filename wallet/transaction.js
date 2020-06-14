@@ -7,13 +7,14 @@ class Transaction {
         this.id = uuid();
         this.outputMap = outputMap || this.createOutputMap({senderWallet, recipient, amount});
         this.input = input || this.createInput({senderWallet, outputMap: this.outputMap});
+        this.count = 1;
     }
 
     createOutputMap({senderWallet, recipient, amount}) {
         const outputMap = {};
 
         outputMap[recipient] = amount;
-        outputMap[senderWallet.publicKey] = senderWallet.balance - amount;
+        outputMap[senderWallet.publicKey] = senderWallet.balance - amount - 2;
 
         return outputMap;
     }
@@ -28,7 +29,7 @@ class Transaction {
     }
 
     update({senderWallet, recipient, amount}) {
-        if(amount>this.outputMap[senderWallet.publicKey]) {
+        if(amount+2>this.outputMap[senderWallet.publicKey]) {
             throw new Error('Amount exceeds balance');
         }
 
@@ -37,19 +38,19 @@ class Transaction {
         } else {
             this.outputMap[recipient] = this.outputMap[recipient] +amount;
         }
-        
-        this.outputMap[senderWallet.publicKey] = this.outputMap[senderWallet.publicKey]-amount;
+        this.count += 1;
+        this.outputMap[senderWallet.publicKey] = this.outputMap[senderWallet.publicKey]-amount - 2;
 
         this.input = this.createInput({senderWallet, outputMap: this.outputMap});
     }
 
     static validTransaction(transaction) {
-        const {input: {address, amount, signature}, outputMap} = transaction;
+        const {input: {address, amount, signature}, outputMap, count} = transaction;
 
         const outputTotal = Object.values(outputMap)
         .reduce((total, outputAmount) => total+outputAmount);
 
-        if(amount !== outputTotal) {
+        if(amount !== (outputTotal+(2*count))) {
             console.error(`Invalid transaction from ${address}`);
             return false;
         }
@@ -61,10 +62,11 @@ class Transaction {
         return true;
     } 
 
-    static rewardTransaction({minerWallet}) {
+    static rewardTransaction({minerWallet, totalTransactionCount}) {
+        const finalReward = MINING_REWARD + totalTransactionCount*2;
         return new this({
             input: REWARD_INPUT,
-            outputMap: { [minerWallet.publicKey]: MINING_REWARD}
+            outputMap: { [minerWallet.publicKey]: finalReward}
         });
     }
 }

@@ -66,6 +66,11 @@ class Blockchain{
             const block = chain[i];
             const transactionSet = new Set();
             let rewardTransactionCount = 0;
+            let totalTransactionCount = -1;
+
+            for(let transaction of block.data) {
+                totalTransactionCount += transaction.count;
+            }
 
             for(let transaction of block.data) {
 
@@ -77,7 +82,7 @@ class Blockchain{
                         return false;
                     }
 
-                    if(Object.values(transaction.outputMap)[0] !== MINING_REWARD) {
+                    if(Object.values(transaction.outputMap)[0] !== (MINING_REWARD +(2*totalTransactionCount))) {
                         console.error('Miner reward amt is invalid');
                         return false;
                     }

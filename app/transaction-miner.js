@@ -11,8 +11,13 @@ class TransactionMiner {
     mineTransactions() {
         const validTransactions = this.transactionPool.validTransactions();
 
+        let totalCount = 0;
+        for(let transaction of validTransactions) {
+            totalCount += transaction.count;
+        }
+
         validTransactions.push(
-            Transaction.rewardTransaction({minerWallet: this.wallet})
+            Transaction.rewardTransaction({minerWallet: this.wallet, totalTransactionCount: totalCount})
         );
 
         this.blockchain.addBlock({data: validTransactions});
